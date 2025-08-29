@@ -120,7 +120,7 @@ export default function LoginPage() {
       showToast("Network/server error. Check console and CORS settings.", "error", 5000);
     }
   };
-
+//testings
   return (
     <ScrollView className="flex-1 bg-gray-50">
       <View className="flex-1 justify-center px-8 py-12">
