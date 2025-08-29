@@ -72,7 +72,7 @@ export default function LoginPage() {
       showToast("Attempting login...", "info", 2000);
 
       const response = await axios.post(
-        "http://192.168.100.4:8000/api/login",
+        "https://library-management-system-boo3.onrender.com/api/login",
         { email, password },
         { timeout: 10000 }
       );
