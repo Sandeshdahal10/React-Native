@@ -14,15 +14,6 @@ import {
 import { useRouter } from "expo-router";
 import axios from "axios";
 
-// Use a single axios instance so we always call the hosted API and have consistent timeouts
-const api = axios.create({
-  baseURL: "https://library-management-system-boo3.onrender.com/api",
-  timeout: 10000,
-  headers: { "Content-Type": "application/json" },
-});
-
-console.log("API base:", api.defaults?.baseURL);
-
 
 /**
  * LoginPage component
@@ -81,19 +72,13 @@ export default function LoginPage() {
     try {
       showToast("Attempting login...", "info", 2000);
 
-      // quick reachability check (will surface DNS/SSL/network errors early)
-      try {
-        const ping = await fetch("https://library-management-system-boo3.onrender.com/api/ping", { method: "GET" });
-        console.log("Ping status (pre-login):", ping.status);
-      } catch (pErr) {
-        console.warn("Ping failed (pre-login):", pErr?.message || pErr);
-        // continue to attempt login so we capture axios debug output as well
-      }
+      const response = await axios.post(
+        "https://library-management-system-boo3.onrender.com/api/login",
+        { email, password },
+        { timeout: 10000 }
+      );
 
-      // Use the api axios instance (ensures baseURL is correct)
-      const response = await api.post("/login", { email, password });
-
-      console.log("Login response:", response?.status, response?.data);
+      console.log("Login response:", response);
 
       // Reasonable assumptions about API shape:
       // - success indicated by response.data.success === true OR presence of response.data.token
@@ -121,19 +106,9 @@ export default function LoginPage() {
       // fallback for invalid credentials
       showToast("Invalid credentials", "error");
     } catch (error) {
-      // Detailed debug printed to Metro and shown on device so we can diagnose
-      const debug = {
-        message: error?.message,
-        code: error?.code,
-        isAxiosError: !!error?.isAxiosError,
-        status: error?.response?.status,
-        responseData: error?.response?.data,
-        responseHeaders: error?.response?.headers,
-        hasRequest: !!error?.request,
-      };
-      console.error("Login error (debug):", debug);
-      Alert.alert("Login failed", `msg: ${debug.message}\nstatus: ${debug.status || "N/A"}`);
+      console.error("Login error:", error);
 
+      // If server responded with 4xx and a message, try to parse it
       const serverMsg = error?.response?.data?.message;
       if (serverMsg) {
         const m = serverMsg.toString().toLowerCase();
@@ -142,22 +117,8 @@ export default function LoginPage() {
         return showToast(serverMsg, "error");
       }
 
-      return showToast("Network/server error. Check server logs and device network.", "error", 5000);
-    }
-  };
-  // small helper to test reachability from the phone
-  const testApi = async () => {
-    try {
-      showToast("Testing API...", "info", 1200);
-      const r = await fetch("https://library-management-system-boo3.onrender.com/api/ping");
-      const text = await r.text();
-      console.log("Test API fetch result:", r.status, text);
-      Alert.alert("API reachable", `status: ${r.status}\n${text}`);
-      showToast("API reachable", "success", 1500);
-    } catch (e) {
-      console.error("Test API failed:", { message: e?.message || e, stack: e?.stack });
-      Alert.alert("API ping failed", `${e?.message || e}`);
-      showToast("API unreachable", "error", 2000);
+      // Network or CORS errors
+      showToast("Network/server error. Check console and CORS settings.", "error", 5000);
     }
   };
 //testings
