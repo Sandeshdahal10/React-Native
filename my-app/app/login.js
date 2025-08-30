@@ -74,7 +74,12 @@ export default function LoginPage() {
 
       const response = await axios.post(
         "https://library-management-system-boo3.onrender.com/api/login",
-        { email, password },
+        { email, password },{
+          headers:{
+            "content-Type": "application/json",
+            "Accept": "application/json"
+          }
+        }
         { timeout: 10000 }
       );
 
